@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Voxel Mesa</title>
+<title>Voxel Mesa Oasis</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
 body{overflow:hidden;background:#000}
 #c{width:100vw;height:100vh;display:block}
-
+body::after{
+  content:'';position:fixed;inset:0;z-index:950;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;opacity:.05;
+}
+ 
 :root{
   --g-bg:    rgba(28,22,20,.72);
   --g-bg2:   rgba(42,34,30,.80);
@@ -23,7 +28,7 @@ body{overflow:hidden;background:#000}
   --bar-w:   min(580px, calc(100vw - 32px));
   --bar-bot: max(28px, env(safe-area-inset-bottom, 28px));
 }
-
+ 
 /* == Time badge == */
 /* == Gooey wrapper == */
 #goo-wrap{
@@ -45,7 +50,7 @@ body{overflow:hidden;background:#000}
 }
 #time-badge:hover{background:rgba(42,33,30,.7)}
 #time-badge.goo-pulse{transform:translateX(-50%) scale(.96)}
-
+ 
 /* == Todo panel == */
 #todo-panel{
   position:fixed;z-index:901;
@@ -59,7 +64,7 @@ body{overflow:hidden;background:#000}
   background:none;border:none;padding:0;
 }
 #todo-panel.hidden{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(14px)}
-
+ 
 /* == Ambience panel == */
 #amb-panel{
   position:fixed;z-index:901;
@@ -73,6 +78,7 @@ body{overflow:hidden;background:#000}
   border:1px solid rgba(255,255,255,.12);
   border-radius:24px;
   padding:14px 22px 12px;
+  box-shadow:0 20px 50px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 40px rgba(255,255,255,.03);
 }
 #amb-panel.hidden{
   opacity:0;pointer-events:none;
@@ -84,7 +90,7 @@ body{overflow:hidden;background:#000}
 #amb-panel.hidden .ap-head,#amb-panel.hidden #ap-rows,#amb-panel.hidden .ap-reset{
   opacity:0; transition:opacity .08s ease;
 }
-
+ 
 /* == Panel internals == */
 .ap-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .ap-title{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.4);text-transform:uppercase}
@@ -101,19 +107,6 @@ body{overflow:hidden;background:#000}
 .ap-seg.filled{background:var(--seg-color,#e67e22)}
 .ap-seg.peak{box-shadow:0 0 8px var(--seg-color,#e67e22)}
 .ap-segs:active .ap-seg{transform:scaleY(1.15)}
-.ap-toggle{
-  width:34px;height:19px;border-radius:10px;
-  background:rgba(255,255,255,.12);border:none;
-  cursor:pointer;position:relative;flex-shrink:0;
-  transition:background .18s;-webkit-tap-highlight-color:transparent;
-}
-.ap-toggle.on{background:#e67e22}
-.ap-toggle-knob{
-  position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;
-  background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3);
-  transition:transform .18s cubic-bezier(.4,0,.2,1);
-}
-.ap-toggle.on .ap-toggle-knob{transform:translateX(15px)}
 .ap-reset{
   margin-top:10px;width:100%;padding:7px;border-radius:10px;
   font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
@@ -121,18 +114,19 @@ body{overflow:hidden;background:#000}
   color:rgba(255,255,255,.5);cursor:pointer;transition:background .12s,color .12s;
 }
 .ap-reset:hover{background:rgba(255,255,255,.16);color:rgba(255,255,255,.9)}
-
+ 
 /* == Task list == */
 #todo-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;-webkit-overflow-scrolling:touch;padding-right:2px}
 .td-item{
   display:flex;align-items:center;gap:14px;padding:14px 20px;
   border-radius:50px;cursor:pointer;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,247,235,.09);
+  border:1px solid rgba(255,247,235,.13);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
   transition:background .2s,transform .2s;
   -webkit-tap-highlight-color:transparent;
 }
-.td-item:hover{background:rgba(255,255,255,.12);transform:translateX(2px)}
+.td-item:hover{background:rgba(255,247,235,.15);transform:translateX(2px)}
 .td-item.done{opacity:.45}
 .td-item.done .td-text{text-decoration:line-through}
 .td-check{
@@ -147,7 +141,12 @@ body{overflow:hidden;background:#000}
 .td-date{font-family:var(--mono);font-size:10px;color:rgba(18,12,10,.62);letter-spacing:.02em;text-shadow:0 1px 2px rgba(255,255,255,.4)}
 .td-del{background:none;border:none;color:rgba(18,12,10,.3);font-size:15px;cursor:pointer;padding:3px 5px;flex-shrink:0;transition:color .12s;-webkit-tap-highlight-color:transparent}
 .td-del:hover,.td-del:active{color:rgba(255,100,100,.9)}
-
+#td-empty{
+  font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.5);
+  text-align:center;padding:22px 16px;letter-spacing:.02em;line-height:1.5;
+  background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.15);border-radius:24px;
+}
+ 
 /* == Unified task bar == */
 #task-bar{
   position:fixed;
@@ -157,8 +156,8 @@ body{overflow:hidden;background:#000}
   background:rgba(28,22,20,.72);
   backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
   border:1px solid var(--g-border);
-  border-radius:16px;
-  box-shadow:var(--g-shadow);
+  border-radius:28px;
+  box-shadow:var(--g-shadow), inset 0 0 30px rgba(255,255,255,.025);
   display:flex;align-items:center;
   height:56px;padding:0 6px;
   z-index:900;
@@ -193,11 +192,23 @@ body{overflow:hidden;background:#000}
   -webkit-tap-highlight-color:transparent;
 }
 #task-submit:active{background:rgba(0,0,0,.14)}
-
+ 
+#task-input:focus-visible{outline:none}
+#todo-fab:focus-visible,#eye-fab:focus-visible,#task-submit:focus-visible,
+.td-item:focus-visible,.td-del:focus-visible,.ap-reset:focus-visible,#time-badge:focus-visible{
+  outline:2px solid rgba(230,126,34,.8);outline-offset:2px;
+}
+ 
+@keyframes barPulse{
+  0%{box-shadow:var(--g-shadow), inset 0 0 30px rgba(255,255,255,.025), 0 0 0 0 rgba(230,126,34,.55)}
+  100%{box-shadow:var(--g-shadow), inset 0 0 30px rgba(255,255,255,.025), 0 0 0 16px rgba(230,126,34,0)}
+}
+#task-bar.success{animation:barPulse .55s ease-out}
+ 
 /* == Mobile == */
 @media (max-width:640px){
   :root{--bar-bot:max(20px,env(safe-area-inset-bottom,20px))}
-  #task-bar{height:52px;border-radius:14px;padding:0 4px;width:calc(100vw - 24px);--bar-w:calc(100vw - 24px)}
+  #task-bar{height:52px;border-radius:26px;padding:0 4px;width:calc(100vw - 24px);--bar-w:calc(100vw - 24px)}
   #task-input{font-size:16px;padding:0 10px}
   #task-submit{display:flex}
   #todo-fab,#eye-fab{width:42px;height:40px}
@@ -208,7 +219,7 @@ body{overflow:hidden;background:#000}
   .td-text{font-size:13px}
   #time-badge{font-size:10px;padding:5px 12px;max-width:calc(100vw - 32px)}
 }
-
+ 
 /* == Tooltip == */
 #lamp-tooltip{
   position:fixed;pointer-events:none;z-index:999;
@@ -219,7 +230,7 @@ body{overflow:hidden;background:#000}
   box-shadow:0 4px 20px rgba(0,0,0,.3);transition:opacity .1s;
 }
 #lamp-tooltip.hidden{opacity:0}
-
+ 
 /* == Persistent tree labels == */
 .tree-label{
   position:fixed;z-index:998;pointer-events:none;
@@ -245,9 +256,9 @@ body{overflow:hidden;background:#000}
     <button class="ap-reset" id="ap-reset">Reset</button>
   </div>
 </div>
-
+ 
 <div id="todo-panel" class="hidden"><div id="todo-list"></div></div>
-
+ 
 <div id="task-bar">
   <input id="task-input" type="text" placeholder="plant a new cactus..." maxlength="120" autocomplete="off" spellcheck="false">
   <button id="task-submit" title="Add task">
@@ -269,15 +280,15 @@ body{overflow:hidden;background:#000}
     </svg>
   </button>
 </div>
-
+ 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/controls/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/"}}</script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
+ 
 // == Detect mobile ==
 const IS_MOBILE = window.innerWidth <= 768 || ('ontouchstart' in window);
-
+ 
 // == Renderer ==
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({
@@ -290,22 +301,22 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.LinearToneMapping;
 renderer.toneMappingExposure = 1.0;
-
+ 
 window.addEventListener('resize',()=>{
   renderer.setSize(innerWidth,innerHeight);
   camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
 });
-
+ 
 // == Scene ==
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#78A7FF'); // Minecraft Day Sky
 scene.fog = new THREE.Fog('#78A7FF', 80, 350); // Linear blocky fog
-
+ 
 // == Camera ==
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.5, 400);
 camera.position.set(0, 55, 90);
-
+ 
 // == Controls ==
 const controls = new OrbitControls(camera, canvas);
 controls.target.set(0, 15, 0);
@@ -316,7 +327,7 @@ controls.maxDistance = 140;
 controls.zoomSpeed = 0.17;
 controls.maxPolarAngle = Math.PI * 0.42;
 controls.update();
-
+ 
 // == Lighting ==
 const hemi = new THREE.HemisphereLight(0xffffff, 0x5a3a20, 0.6);
 scene.add(hemi);
@@ -333,17 +344,17 @@ sun.shadow.bias = -0.001;
 sun.shadow.mapSize.width = 2048;
 sun.shadow.mapSize.height = 2048;
 scene.add(sun);
-
+ 
 // Night fill
 const nightFill = new THREE.PointLight(0xff9944, 0, 200);
 nightFill.position.set(0, 18, 0);
 scene.add(nightFill);
-
+ 
 // == Ambience settings ==
-const AMB = { brightness: 1.0, fogDensity: 1.0, rain: false, wind: false };
+const AMB = { brightness: 1.0, fogDensity: 1.0 };
 const FOG_BASE = 350; // Using linear fog now
 const WATER_LEVEL = 4; // Raised water level to fill the reservoir more
-
+ 
 // == Shared Materials (Minecraft colors based on image) ==
 const BANDS = {
   0: '#d9652a', // Orange terracotta / Sand
@@ -364,7 +375,7 @@ const BANDS = {
   15: '#d2a28d',
   16: '#856b62',
 };
-
+ 
 const matsCache = {};
 function getVoxelMat(hex) {
   if(!matsCache[hex]) {
@@ -374,21 +385,21 @@ function getVoxelMat(hex) {
   }
   return matsCache[hex];
 }
-
+ 
 const waterMat = new THREE.MeshStandardMaterial({
   color: '#3256a8', transparent: true, opacity: 0.85, roughness: 0.1
 });
-
+ 
 // Emissive materials for torches/lamps
 const EMIT = {
   torchFlame: new THREE.MeshStandardMaterial({color:'#ffaa00',emissive:'#ff5500',emissiveIntensity:3.5}),
   fireCore:   new THREE.MeshStandardMaterial({color:'#ffcc00',emissive:'#ff8800',emissiveIntensity:6})
 };
-
+ 
 // == Terrain Logic (Mesa Voxel Generation) ==
 const terrain = new Map();
 const getH = (x,z) => terrain.get(`${Math.round(x)},${Math.round(z)}`) ?? 0;
-
+ 
 function getMesaHeight(x, z) {
   // Base rolling hills
   let base = 8 + Math.sin(x*0.06)*5 + Math.cos(z*0.07)*5;
@@ -396,38 +407,40 @@ function getMesaHeight(x, z) {
   let n = Math.sin(x*0.02) * Math.cos(z*0.02) * 20;
   let h = base + Math.abs(n);
   
-  // NEW: Circular Basin Effect (Mountains wrapping around)
   const d = Math.sqrt(x*x + z*z);
-  const BOWL_START = 18; // Keep the center flat, start curving up past this radius
-  if (d > BOWL_START) {
-    // Increase height radially, stepped by 3 for mesa terracing look
-    let radialBoost = Math.pow((d - BOWL_START) * 0.18, 1.3) * 2.5; // softened curve
-    h += Math.floor(radialBoost / 3) * 3;
+  
+  // NEW: Oasis Pond Logic with asymmetrical, organic curvature
+  let shapeDistortion = Math.sin(x * 0.12 + 2) * 3 + Math.sin(z * 0.18 + x * 0.05) * 2.5;
+  let pondRadius = 14 + shapeDistortion;
+  
+  if (d < pondRadius) {
+    if (d < pondRadius - 6) {
+      h = 1; // Deep center
+    } else {
+      // Stepped shore towards the edges of the pond
+      h = 1 + Math.floor((d - (pondRadius - 6)) / 2) * 2;
+    }
   }
   
   // Add some random noise bumps on top
   if (Math.sin(x*0.3 + z*0.2) > 0.7) h += 1;
-
-  // Winding River - Calculate cut AFTER radial bowl so canyon walls don't warp into sky-peaks
-  let riverPath = Math.sin(z * 0.05) * 12;
-  let dist = Math.abs(x - riverPath);
   
-  if (dist < 4) {
-    h = 2; // River bed
-  } else if (dist < 12) {
-    // Stepped cliffs matching image
-    let canyonH = 2 + Math.floor((dist - 4) / 1.5) * 3; 
-    h = Math.min(h, canyonH); // Carve down
+  // Circular Basin Effect (Mountains wrapping around)
+  const BOWL_START = 22; // Pushed outward slightly to accommodate the pond
+  if (d > BOWL_START) {
+    // Increase height radially, stepped by 3 for mesa terracing look
+    let radialBoost = Math.pow((d - BOWL_START) * 0.18, 1.5) * 2.5;
+    h += Math.floor(radialBoost / 3) * 3;
   }
   
   return Math.floor(h);
 }
-
+ 
 function buildTerrain(){
   const SIZE = IS_MOBILE ? 40 : 50;
   const blocks = {}; // Organize by color hex
   const waterBlocks = [];
-
+ 
   // Calculate Heights
   for(let x=-SIZE; x<=SIZE; x++) {
     for(let z=-SIZE; z<=SIZE; z++) {
@@ -436,7 +449,7 @@ function buildTerrain(){
       terrain.set(`${x},${z}`, getMesaHeight(x, z));
     }
   }
-
+ 
   // Determine Visible Blocks
   for(let x=-SIZE; x<=SIZE; x++) {
     for(let z=-SIZE; z<=SIZE; z++) {
@@ -444,14 +457,14 @@ function buildTerrain(){
       if(d>SIZE) continue;
       
       let h = getH(x, z);
-
+ 
       // Add water layer
       if (h <= WATER_LEVEL) {
         for(let wy=h; wy<=WATER_LEVEL; wy++){
           waterBlocks.push({x, y:wy, z});
         }
       }
-
+ 
       // Check neighbors to know how far down to draw the cliff sides (saving instances)
       let minH = Math.min(
         getH(x-1, z) || h, getH(x+1, z) || h,
@@ -465,22 +478,22 @@ function buildTerrain(){
         let bandKey = y % 17;
         if(bandKey < 0) bandKey += 17;
         let hex = BANDS[bandKey];
-
+ 
         // --- OASIS LUSH LOGIC ---
-        // Calculate dynamic center of the river
-        let riverCenter = Math.sin(z * 0.05) * 12;
-        let distToRiver = Math.abs(x - riverCenter);
+        const distToCenter = Math.sqrt(x*x + z*z);
+        let shapeDistortion = Math.sin(x * 0.12 + 2) * 3 + Math.sin(z * 0.18 + x * 0.05) * 2.5;
+        let lushRadius = 18 + shapeDistortion;
         
-        // Only apply greenery to top blocks, on the positive X side, near the water level
-        if (y === h && x > riverCenter && h > WATER_LEVEL && h <= WATER_LEVEL + 5 && distToRiver < 16) {
+        // Only apply greenery to top blocks near the water level around the pond
+        if (y === h && h > WATER_LEVEL && h <= WATER_LEVEL + 5 && distToCenter < lushRadius) {
           // Fade out the lushness the further we get from the water
-          let lushChance = 1.0 - ((distToRiver - 4) / 12);
+          let lushChance = 1.0 - ((distToCenter - (lushRadius - 10)) / 10);
           
           if (Math.random() < lushChance) {
             hex = Math.random() > 0.3 ? '#668f45' : '#517a36'; // Voxel grass colors
             
             // Occasionally stack a dark green block on top to act as a voxel bush
-            if (Math.random() < 0.06) {
+            if (Math.random() < 0.08) {
               let bushHex = '#3a5a22';
               if (!blocks[bushHex]) blocks[bushHex] = [];
               blocks[bushHex].push({x, y: h + 1, z});
@@ -488,17 +501,17 @@ function buildTerrain(){
           }
         }
         // ------------------------
-
+ 
         if (!blocks[hex]) blocks[hex] = [];
         blocks[hex].push({x, y, z});
       }
     }
   }
-
+ 
   // Build Instanced Meshes
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
   const dummy = new THREE.Object3D();
-
+ 
   for (const hex in blocks) {
     const pts = blocks[hex];
     const mesh = new THREE.InstancedMesh(boxGeo, getVoxelMat(hex), pts.length);
@@ -512,7 +525,7 @@ function buildTerrain(){
     mesh.instanceMatrix.needsUpdate = true;
     scene.add(mesh);
   }
-
+ 
   // Water mesh
   if (waterBlocks.length) {
     const wMesh = new THREE.InstancedMesh(boxGeo, waterMat, waterBlocks.length);
@@ -526,23 +539,26 @@ function buildTerrain(){
     scene.add(wMesh);
   }
 }
-
+ 
 // == Task Trees (Voxel Cacti) ==
 const TREE_POOL = [
-  [14,8],[-8,-12],[18,-6],[-16,4],[6,-20],[22,16],[-20,-14],[4,18],
-  [-10,20],[16,-18],[-24,6],[10,10],[-6,-18],[20,-14],[-14,12],[8,22],
+  [18,12], [-14,-18], [22,-8], [-20,10], 
+  [10,-24], [26,18], [-24,-16], [8,22], 
+  [-16,24], [20,-20], [-28,8], [14,16], 
+  [-12,-22], [24,-16], [-18,18], [12,26]
 ];
-
+ 
 const taskTrees = [];
 const taskFlowers = [];
-
+const treeSpawnTimes = {};
+ 
 function spawnTaskCactus(x, z, todo){
   const y = getH(x, z);
   const g = new THREE.Group();
-
+ 
   const cactusMat = getVoxelMat('#557a2b');
   const flowerMat = new THREE.MeshStandardMaterial({color:'#ff9900', emissive:'#cc5500', emissiveIntensity:0.2, roughness:0.8});
-
+ 
   // Voxel Trunk
   for(let i=1; i<=3; i++){
     const b = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1, 0.8), cactusMat);
@@ -550,7 +566,7 @@ function spawnTaskCactus(x, z, todo){
     b.castShadow = true; b.receiveShadow = true;
     g.add(b);
   }
-
+ 
   // Random arm
   if(Math.random() > 0.5) {
     const arm = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1, 0.8), cactusMat);
@@ -567,46 +583,49 @@ function spawnTaskCactus(x, z, todo){
     f.position.set(0, 2.7, 0);
     g.add(f);
   }
-
+ 
   // Invisible hit sphere
   const hitMesh = new THREE.Mesh(new THREE.BoxGeometry(2.5, 4, 2.5), new THREE.MeshBasicMaterial({visible:false}));
   hitMesh.position.y = 1.5; g.add(hitMesh);
-
+ 
   g.position.set(x, y + 0.5, z); // shift up to sit exactly on block
+  const isNew = !(todo.id in treeSpawnTimes);
+  if(isNew) treeSpawnTimes[todo.id] = performance.now();
+  g.scale.setScalar(isNew ? 0.001 : 1);
   scene.add(g);
-
-  const entry = { group:g, canopyMats: [flowerMat], hitMesh, todo };
+ 
+  const entry = { group:g, canopyMats: [flowerMat], hitMesh, todo, spawnedAt: treeSpawnTimes[todo.id] };
   hitMesh.userData.treeEntry = entry;
   taskTrees.push(entry);
   return entry;
 }
-
+ 
 function spawnTaskBarrelCactus(x, z, todo){
   const y = getH(x, z);
   const g = new THREE.Group();
-
+ 
   const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), getVoxelMat('#557a2b'));
   body.position.y = 0.4;
   body.castShadow = true; body.receiveShadow = true;
   g.add(body);
-
+ 
   const flowerMat = new THREE.MeshStandardMaterial({color:'#ff5555', emissive:'#cc2222', emissiveIntensity:0.35, roughness:0.8});
   const flower = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), flowerMat);
   flower.position.y = 0.95; g.add(flower);
-
+ 
   g.position.set(x, y + 0.5, z);
   scene.add(g);
   taskFlowers.push({group:g});
 }
-
+ 
 function buildTaskTrees(){
   taskTrees.forEach(t=>scene.remove(t.group));
   taskTrees.length = 0;
   taskFlowers.forEach(f=>scene.remove(f.group));
   taskFlowers.length = 0;
-
+ 
   const validPool = TREE_POOL.filter(([x,z])=> getH(x,z) > WATER_LEVEL); // Must be above water
-
+ 
   todos.forEach((t, i)=>{
     if(i >= validPool.length) return;
     const seed = (t.id || i+1);
@@ -621,22 +640,22 @@ function buildTaskTrees(){
   });
   buildPersistentLabels();
 }
-
+ 
 // == Hover / tooltip ==
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredTree = null;
 const tooltip = document.getElementById('lamp-tooltip');
-
+ 
 // == Eye toggle ==
 let labelsAlwaysOn = false;
 const persistentLabels = [];
-
+ 
 function buildPersistentLabels(){
   persistentLabels.forEach(p=>p.el.remove());
   persistentLabels.length = 0;
   if(!labelsAlwaysOn) return;
-
+ 
   taskTrees.forEach(entry=>{
     const el = document.createElement('div');
     el.className = 'tree-label';
@@ -645,7 +664,7 @@ function buildPersistentLabels(){
     persistentLabels.push({el, entry});
   });
 }
-
+ 
 function updatePersistentLabelPositions(){
   if(!labelsAlwaysOn || persistentLabels.length===0) return;
   const v = new THREE.Vector3();
@@ -664,7 +683,7 @@ function updatePersistentLabelPositions(){
     }
   });
 }
-
+ 
 const eyeFab = document.getElementById('eye-fab');
 const eyeSlash = document.getElementById('eye-slash');
 eyeFab.addEventListener('click', e=>{
@@ -676,17 +695,17 @@ eyeFab.addEventListener('click', e=>{
   buildPersistentLabels();
   updatePersistentLabelPositions();
 });
-
+ 
 function onPointerMove(e){
   if(labelsAlwaysOn){ tooltip.classList.add('hidden'); return; }
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
   const clientY = e.touches ? e.touches[0].clientY : e.clientY;
   mouse.x = (clientX / innerWidth)  * 2 - 1;
   mouse.y = (clientY / innerHeight) * -2 + 1;
-
+ 
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(taskTrees.map(t=>t.hitMesh));
-
+ 
   if(intersects.length > 0){
     const entry = intersects[0].object.userData.treeEntry;
     if(entry !== hoveredTree){
@@ -705,17 +724,17 @@ function onPointerMove(e){
     canvas.style.cursor = '';
   }
 }
-
+ 
 function setTreeHover(entry, on){
   entry.canopyMats.forEach(m=>{
     m.emissiveIntensity = on ? 0.8 : 0.2;
     m.emissive.set(on ? '#ffcc00' : '#cc5500');
   });
 }
-
+ 
 window.addEventListener('mousemove', onPointerMove, {passive:true});
 window.addEventListener('touchmove',  onPointerMove, {passive:true});
-
+ 
 // == Voxel Torch ==
 function createRusticTorch(x,z){
   const y = getH(x,z);
@@ -727,52 +746,14 @@ function createRusticTorch(x,z){
   
   const flame = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), EMIT.torchFlame);
   flame.position.y=0.65; g.add(flame);
-
+ 
   const pLight = new THREE.PointLight('#ffaa00', 1, 15);
   pLight.position.y = 0.8; g.add(pLight);
-
+ 
   g.position.set(x, y + 0.5, z);
   scene.add(g);
 }
-
-// == String Lights (Voxel lanterns on fence posts) ==
-const lanternGroups = [];
-function createStringLights(ax,az,bx,bz,count=5){
-  const postMat = getVoxelMat('#5a3820');
-  const ironMat = getVoxelMat('#222222');
-  const h=4;
-  const ay=getH(ax,az)+h, by=getH(bx,bz)+h;
-
-  [ {x:ax,z:az}, {x:bx,z:bz} ].forEach(pos=>{
-    const gy=getH(pos.x,pos.z);
-    const postH = Math.max(1, (ay - gy));
-    const post=new THREE.Mesh(new THREE.BoxGeometry(0.25, postH, 0.25), postMat);
-    post.position.set(pos.x, gy + postH/2 + 0.5, pos.z); 
-    post.castShadow = true;
-    scene.add(post);
-  });
-
-  for(let i=1;i<count;i++){
-    const t = i/count;
-    const lx=ax+(bx-ax)*t, lz=az+(bz-az)*t;
-    const sag = Math.sin(t*Math.PI)*1.5;
-    const ly = ay+(by-ay)*t - sag;
-    
-    const lg=new THREE.Group();
-    const lanternBox = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.4), ironMat);
-    const glowBox = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.3), new THREE.MeshStandardMaterial({color:'#ffea88', emissive:'#ffcc22', emissiveIntensity:2}));
-    glowBox.position.y = 0;
-    lg.add(lanternBox, glowBox);
-    
-    const pLight = new THREE.PointLight('#ffdd66', 1, 20);
-    lg.add(pLight);
-
-    lg.position.set(lx, ly, lz);
-    scene.add(lg);
-    lanternGroups.push({group:lg, pivotY:ly, phase:Math.random()*Math.PI*2});
-  }
-}
-
+ 
 // == Dry Brush / Dead Bushes (Minecraft style) ==
 function createDeadBush(x, z) {
   const y = getH(x,z);
@@ -788,11 +769,11 @@ function createDeadBush(x, z) {
   b2.position.set(0, 0.25, 0); g.add(b2);
   const b3 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.4), bushMat);
   b3.position.set(0, 0.3, 0); g.add(b3);
-
+ 
   g.position.set(x, y + 0.5, z);
   scene.add(g);
 }
-
+ 
 // == Voxel Firepit ==
 function createFirepit(x,z){
   const y = getH(x,z);
@@ -809,11 +790,29 @@ function createFirepit(x,z){
   
   const pLight = new THREE.PointLight('#ff8800', 2, 25);
   pLight.position.y = 1.0; g.add(pLight);
-
+ 
   g.position.set(x, y + 0.5, z);
   scene.add(g);
 }
-
+ 
+// == Voxel Adobe Ruin ==
+function createAdobeRuin(x,z){
+  const y = getH(x,z);
+  const g=new THREE.Group();
+  const mat = getVoxelMat('#d9652a'); // Use the orange sand material
+  
+  // Hollow U-shape
+  const left = new THREE.Mesh(new THREE.BoxGeometry(1, 3, 5), mat);
+  left.position.set(-2, 1.5, 0); left.castShadow=true; left.receiveShadow=true; g.add(left);
+  const right = new THREE.Mesh(new THREE.BoxGeometry(1, 3, 5), mat);
+  right.position.set(2, 1.5, 0); right.castShadow=true; right.receiveShadow=true; g.add(right);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 1), mat);
+  back.position.set(0, 1.5, -2); back.castShadow=true; back.receiveShadow=true; g.add(back);
+ 
+  g.position.set(x, y + 0.5, z);
+  scene.add(g);
+}
+ 
 // == Rocks ==
 function createRocks(){
   const rockMat=getVoxelMat('#777777');
@@ -833,7 +832,7 @@ function createRocks(){
     const sx = Math.random()>0.5?2:1;
     const sy = 1;
     const sz = Math.random()>0.5?2:1;
-
+ 
     dummy.position.set(x, y + 0.5, z); 
     dummy.scale.set(sx, sy, sz);
     dummy.rotation.set(0,0,0);
@@ -842,7 +841,7 @@ function createRocks(){
   mesh.count=placed; mesh.instanceMatrix.needsUpdate=true;
   scene.add(mesh);
 }
-
+ 
 // == Time of day ==
 function applyTime(){
   const now=new Date(), hour=now.getHours()+now.getMinutes()/60;
@@ -885,7 +884,7 @@ function applyTime(){
   const tdStyle = document.getElementById('td-item-style') || (()=>{
     const el=document.createElement('style');el.id='td-item-style';document.head.appendChild(el);return el;
   })();
-  tdStyle.textContent=`.td-item{background:rgba(255,255,255,${itemAlpha}) !important}`;
+  tdStyle.textContent=`.td-item{background:rgba(255,247,235,${itemAlpha}) !important}`;
   
   const badge=document.getElementById('time-badge');
   if(badge){
@@ -896,23 +895,22 @@ function applyTime(){
     badge.textContent=dateStr+' · '+ts+' · '+tzShort;
   }
 }
-
+ 
 // == Build world ==
 buildTerrain();
 createRocks();
-
+ 
 // Scattered Dead Bushes
 for(let i=0; i<15; i++) {
   createDeadBush(Math.round((Math.random()-0.5)*40), Math.round((Math.random()-0.5)*40));
 }
-
-createFirepit(10, 10);
-
-createStringLights(3,0,16,8,IS_MOBILE?3:5);
-
-[[25,-21],[23,-19],[22,-23],[21,-21]].forEach(([x,z])=>createRusticTorch(x,z));
+ 
+createAdobeRuin(-22,18);
+createFirepit(15, 12);
+ 
+[[12,-12],[-12,12],[-14,-10],[16,10]].forEach(([x,z])=>createRusticTorch(x,z));
 (IS_MOBILE?[[-21,16],[-26,-6],[6,-26],[0,27]]:[[-21,16],[-16,21],[-26,-6],[-25,-9],[6,-26],[9,-25],[0,27],[6,26],[0,-27]]).forEach(([x,z])=>createRusticTorch(x,z));
-
+ 
 // == Ambience panel ==
 const SEGS_COUNT = 8;
 const SLIDERS=[
@@ -921,23 +919,23 @@ const SLIDERS=[
 ];
 const defaults={...AMB};
 const apRows=document.getElementById('ap-rows');
-
+ 
 function valToSegCount(val,min,max){
   return Math.max(1, Math.min(SEGS_COUNT, Math.round(((val-min)/(max-min))*SEGS_COUNT)));
 }
 function segCountToVal(n,min,max){
   return min + (n/SEGS_COUNT)*(max-min);
 }
-
+ 
 SLIDERS.forEach(({key,label,min,max,fmt,color})=>{
   const row=document.createElement('div'); row.className='ap-row';
   const filled = valToSegCount(AMB[key],min,max);
-
+ 
   let segsHTML='';
   for(let i=0;i<SEGS_COUNT;i++){
     segsHTML+=`<div class="ap-seg${i<filled?' filled':''}${i===filled-1?' peak':''}" data-i="${i}"></div>`;
   }
-
+ 
   row.innerHTML=`
     <div class="ap-lbl">
       <span>${label}</span>
@@ -945,9 +943,9 @@ SLIDERS.forEach(({key,label,min,max,fmt,color})=>{
     </div>
     <div class="ap-segs" id="segs-${key}" style="--seg-color:${color}">${segsHTML}</div>`;
   apRows.appendChild(row);
-
+ 
   const segsEl = row.querySelector('.ap-segs');
-
+ 
   function setFromClientX(clientX){
     const rect = segsEl.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
@@ -960,14 +958,14 @@ SLIDERS.forEach(({key,label,min,max,fmt,color})=>{
     });
     applyTime();
   }
-
+ 
   let dragging=false;
   segsEl.addEventListener('pointerdown', e=>{ dragging=true; segsEl.setPointerCapture(e.pointerId); setFromClientX(e.clientX); });
   segsEl.addEventListener('pointermove', e=>{ if(dragging) setFromClientX(e.clientX); });
   segsEl.addEventListener('pointerup',   ()=>{ dragging=false; });
   segsEl.addEventListener('pointercancel',()=>{ dragging=false; });
 });
-
+ 
 document.getElementById('ap-reset').addEventListener('click', ()=>{
   Object.assign(AMB,defaults);
   SLIDERS.forEach(({key,min,max,fmt})=>{
@@ -981,7 +979,7 @@ document.getElementById('ap-reset').addEventListener('click', ()=>{
   });
   applyTime();
 });
-
+ 
 const fab=document.getElementById('time-badge'), panel=document.getElementById('amb-panel');
 const gooWrap=document.getElementById('goo-wrap');
 fab.style.cursor='pointer'; fab.style.pointerEvents='auto';
@@ -989,52 +987,52 @@ fab.addEventListener('click', e=>{
   e.stopPropagation();
   const opening = panel.classList.contains('hidden');
   document.getElementById('todo-panel').classList.add('hidden');
-
+ 
   fab.classList.add('goo-pulse');
   setTimeout(()=>fab.classList.remove('goo-pulse'), 140);
-
+ 
   gooWrap.classList.add('goo-active');
   if(opening){ panel.classList.remove('hidden'); }
   else{ panel.classList.add('hidden'); }
   clearTimeout(gooWrap._gooTimer);
   gooWrap._gooTimer=setTimeout(()=>gooWrap.classList.remove('goo-active'), 420);
 });
-
+ 
 applyTime();
 setInterval(applyTime, 60000);
-
+ 
 // == Todo Board (Voxel Sign) ==
-const BOARD_X = -10, BOARD_Z = 12;
+const BOARD_X = -14, BOARD_Z = 16;
 const boardGroup = new THREE.Group();
-
+ 
 const bPost1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 0.2), getVoxelMat('#5a3820'));
 bPost1.position.set(-1.2, 1.5, 0); boardGroup.add(bPost1);
 const bPost2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 0.2), getVoxelMat('#5a3820'));
 bPost2.position.set(1.2, 1.5, 0); boardGroup.add(bPost2);
-
+ 
 const bPlank = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 0.2), getVoxelMat('#5a3820'));
 bPlank.position.set(0, 2.5, 0.1); boardGroup.add(bPlank);
-
+ 
 boardGroup.position.set(BOARD_X, getH(BOARD_X, BOARD_Z) + 0.5, BOARD_Z);
 boardGroup.rotation.y = Math.PI / 4;
 scene.add(boardGroup);
-
+ 
 const paperMeshes = [];
-
+ 
 function buildPapers(){
   paperMeshes.forEach(m=>boardGroup.remove(m));
   paperMeshes.length = 0;
-
+ 
   const MAX = 6;
   const visible = todos.slice(0, MAX);
   const total = visible.length;
-
+ 
   visible.forEach((t, i)=>{
     const mat = new THREE.MeshStandardMaterial({
       color: t.done ? '#a09080' : '#e0dfd5',
       roughness: 1.0,
     });
-
+ 
     const spreadX = total > 1 ? (i/(total-1)) * 2.4 - 1.2 : 0;
     const spreadY = 2.5 + (i%2 === 0 ? 0.1 : -0.1);
     
@@ -1043,31 +1041,35 @@ function buildPapers(){
     
     // Pixelated tilt
     paper.rotation.z = i%2===0 ? 0.1 : -0.1;
-
+ 
     boardGroup.add(paper);
     paperMeshes.push(paper);
   });
 }
-
+ 
 // == Todo logic ==
 const STORE_KEY = 'vg-todos';
 let todos = [];
 try { todos = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch(e){ todos=[]; }
-
+ 
 function saveTodos(){
   localStorage.setItem(STORE_KEY, JSON.stringify(todos));
   buildPapers();
   buildTaskTrees();
 }
-
+ 
 function fmtDate(ts){
   if(!ts) return '';
   return new Date(ts).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 }
-
+ 
 function renderTodos(){
   const list = document.getElementById('todo-list');
   list.innerHTML = '';
+  if(todos.length === 0){
+    list.innerHTML = `<div id="td-empty">Nothing planted yet - type a task below and hit enter.</div>`;
+    return;
+  }
   todos.forEach((t,i)=>{
     const item = document.createElement('div');
     item.className = 'td-item' + (t.done?' done':'');
@@ -1083,11 +1085,11 @@ function renderTodos(){
       <button class="td-del" data-i="${i}">×</button>`;
     item.querySelector('.td-check').addEventListener('click',()=>{ todos[i].done=!todos[i].done; todos[i].completedAt=todos[i].done?Date.now():null; saveTodos(); renderTodos(); });
     item.querySelector('.td-text').addEventListener('click',()=>{ todos[i].done=!todos[i].done; todos[i].completedAt=todos[i].done?Date.now():null; saveTodos(); renderTodos(); });
-    item.querySelector('.td-del').addEventListener('click',e=>{ e.stopPropagation(); todos.splice(i,1); saveTodos(); renderTodos(); });
+    item.querySelector('.td-del').addEventListener('click',e=>{ e.stopPropagation(); delete treeSpawnTimes[todos[i].id]; todos.splice(i,1); saveTodos(); renderTodos(); });
     list.appendChild(item);
   });
 }
-
+ 
 function addTodo(){
   const inp = document.getElementById('task-input');
   const text = inp.value.trim();
@@ -1095,8 +1097,12 @@ function addTodo(){
   todos.unshift({text, done:false, id:Date.now(), createdAt:Date.now()});
   saveTodos(); renderTodos();
   inp.value = '';
+  const bar = document.getElementById('task-bar');
+  bar.classList.remove('success');
+  requestAnimationFrame(()=> bar.classList.add('success'));
+  setTimeout(()=> bar.classList.remove('success'), 600);
 }
-
+ 
 const taskInput = document.getElementById('task-input');
 taskInput.addEventListener('keydown', e=>{
   if(e.key==='Enter'){ e.preventDefault(); addTodo(); }
@@ -1106,7 +1112,7 @@ taskInput.addEventListener('keydown', e=>{
   }
 });
 canvas.addEventListener('pointerdown', ()=> taskInput.blur());
-
+ 
 document.getElementById('task-submit').addEventListener('click', addTodo);
 const todoFab = document.getElementById('todo-fab');
 const todoPanel = document.getElementById('todo-panel');
@@ -1117,7 +1123,7 @@ todoFab.addEventListener('click', e=>{
   panel.classList.add('hidden');
   if(opening) todoPanel.classList.remove('hidden');
 });
-
+ 
 document.addEventListener('click', ()=>{
   if(!panel.classList.contains('hidden')){
     gooWrap.classList.add('goo-active');
@@ -1129,12 +1135,12 @@ document.addEventListener('click', ()=>{
 });
 document.getElementById('amb-panel').addEventListener('click', e=>e.stopPropagation());
 document.getElementById('todo-panel').addEventListener('click', e=>e.stopPropagation());
-
+ 
 renderTodos();
 buildPapers();
 buildTaskTrees();
-
-
+ 
+ 
 // == Animate ==
 const clock = new THREE.Clock();
 let frameN=0;
@@ -1143,13 +1149,18 @@ function animate(){
   frameN++;
   if(IS_MOBILE && frameN%2!==0) return;
   const elapsed=clock.getElapsedTime();
-  
-  // Voxel lantern swing
-  lanternGroups.forEach(({group, phase})=>{
-    const swing = Math.sin(elapsed*1.4 + phase) * 0.1;
-    group.rotation.x = swing;
+ 
+  // Grow-in animation for freshly planted cacti
+  const now = performance.now();
+  taskTrees.forEach(entry=>{
+    if(entry.group.scale.x < 0.999){
+      const t = Math.min(1, (now - entry.spawnedAt) / 420);
+      const eased = t>=1 ? 1 : 1 - Math.pow(2, -9*t) * Math.cos(t*12.5);
+      const s = Math.max(0.001, eased);
+      entry.group.scale.set(s, s, s);
+    }
   });
-
+ 
   updatePersistentLabelPositions();
   
   // Adjust fog distance based on density slider
