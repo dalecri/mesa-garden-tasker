@@ -248,10 +248,36 @@ body::after{
   white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;
   box-shadow:0 4px 14px rgba(0,0,0,.3);
 }
+
+#lightning-flash{
+  position:fixed;inset:0;z-index:945;pointer-events:none;
+  background:#eef3ff;opacity:0;mix-blend-mode:screen;
+}
+#lightning-flash.flash{ animation:lightningFlash .28s ease-out; }
+@keyframes lightningFlash{
+  0%{opacity:0}
+  8%{opacity:.9}
+  18%{opacity:.05}
+  28%{opacity:.55}
+  100%{opacity:0}
+}
+
+/* Weather segmented control in ambience panel */
+.aw-segs{display:flex;gap:6px}
+.aw-opt{
+  flex:1;padding:6px 0;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);color:rgba(255,255,255,.55);
+  font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+  cursor:pointer;transition:background .15s,color .15s,border-color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.aw-opt.active{background:var(--g-accent);color:#fff;border-color:var(--g-accent)}
+.aw-opt:hover:not(.active){background:rgba(255,255,255,.12);color:rgba(255,255,255,.85)}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="lightning-flash"></div>
 <div id="lamp-tooltip" class="hidden"></div>
 <div id="goo-wrap">
   <div id="time-badge" title="Ambience settings">☀️ Day</div>
@@ -394,7 +420,7 @@ scene.add(nightFill);
 const decorLights = [];
  
 // == Ambience settings ==
-const AMB = { brightness: 1.0, fogDensity: 1.0, clouds: true };
+const AMB = { brightness: 1.0, fogDensity: 1.0, clouds: true, weather: 'clear' };
 const FOG_BASE = 350; // Using linear fog now
 const WATER_LEVEL = 4; // Raised water level to fill the reservoir more
  
@@ -973,11 +999,77 @@ for (let i = 0; i < CLOUD_COUNT; i++) {
 }
 scene.add(cloudMesh);
  
+// == Rain — toggled via Ambience panel (Weather: Clear/Rain/Storm) ==========
+// Lightweight instanced-mesh particle system: thin streak quads falling fast,
+// spread across a wide area. Zero cost when toggled off (mesh just hidden,
+// tickRain() early-returns).
+const RAIN_COUNT = IS_MOBILE ? 60 : 140;    // max instances allocated (storm tier)
+const RAIN_LIGHT_FRACTION = 0.5;            // "Rain" tier uses half the instances of "Storm"
+const RAIN_CX = 0, RAIN_CZ = 0;             // centre of the rain area
+const RAIN_R  = 32;                         // spawn radius — how wide the rain covers
+const RAIN_TOP = 38;                        // spawn height above terrain (mesa rim can get tall)
+const RAIN_BOT = -2;                        // despawn height (just below ground/water)
+const rainGeo = new THREE.PlaneGeometry(.045, .9); // thin vertical streak
+const rainMat = new THREE.MeshStandardMaterial({
+  color:'#bcd8ee', emissive:'#9fc3e8', emissiveIntensity:.25,
+  roughness:.3, side:THREE.DoubleSide,
+  transparent:true, opacity:.55,
+});
+const rainMesh = new THREE.InstancedMesh(rainGeo, rainMat, RAIN_COUNT);
+rainMesh.frustumCulled = false;
+rainMesh.visible = false; // hidden until toggled on
+scene.add(rainMesh);
+// Plain typed arrays — no per-particle objects, very cheap to update every frame
+const rain = {
+  x: new Float32Array(RAIN_COUNT),
+  y: new Float32Array(RAIN_COUNT),
+  z: new Float32Array(RAIN_COUNT),
+  vy:new Float32Array(RAIN_COUNT), // fall speed
+  vx:new Float32Array(RAIN_COUNT), // slight wind drift
+  len:new Float32Array(RAIN_COUNT),// streak length variance
+};
+const _rainDummy = new THREE.Object3D();
+function resetRain(i){
+  const a = Math.random()*Math.PI*2, r = Math.random()*RAIN_R;
+  rain.x[i] = RAIN_CX + Math.cos(a)*r;
+  rain.z[i] = RAIN_CZ + Math.sin(a)*r;
+  rain.y[i] = RAIN_TOP - Math.random()*4; // stagger spawn height
+  rain.vy[i]= .42 + Math.random()*.22;    // fast fall, slight variance
+  rain.vx[i]= .04 + Math.random()*.03;    // gentle constant wind drift
+  rain.len[i]= .7 + Math.random()*.6;
+}
+// Spread particles across the full fall range on load, instead of all
+// starting at the top (avoids an obvious "wave" on first toggle-on)
+for(let i=0;i<RAIN_COUNT;i++){
+  resetRain(i);
+  rain.y[i] = RAIN_BOT + Math.random()*(RAIN_TOP-RAIN_BOT);
+}
+// Storm tier falls faster/more slanted than the lighter Rain tier
+const RAIN_SPEED_MULT = { rain: 1, storm: 1.6 };
+function tickRain(){
+  if(AMB.weather === 'clear') return; // early-return = zero cost when off
+  const mult = RAIN_SPEED_MULT[AMB.weather] || 1;
+  const count = rainMesh.count;
+  for(let i=0;i<count;i++){
+    rain.y[i] -= rain.vy[i]*mult;
+    rain.x[i] += rain.vx[i]*mult;
+    if(rain.y[i] < RAIN_BOT) resetRain(i);
+    _rainDummy.position.set(rain.x[i], rain.y[i], rain.z[i]);
+    _rainDummy.rotation.set(0.12, 0, 0); // slight tilt to match wind drift
+    _rainDummy.scale.set(1, rain.len[i], 1);
+    _rainDummy.updateMatrix();
+    rainMesh.setMatrixAt(i, _rainDummy.matrix);
+  }
+  rainMesh.instanceMatrix.needsUpdate = true;
+}
+ 
 // == Time of day ==
 function applyTime(){
   const now=new Date(), hour=now.getHours()+now.getMinutes()/60;
   let day; if(hour<5)day=0; else if(hour<7)day=(hour-5)/2; else if(hour<18)day=1; else if(hour<20)day=1-(hour-18)/2; else day=0;
   const night=1-day;
+  // Storm tint factor - reused below for sky/fog/light dimming, no extra geometry needed
+  const weatherMix = AMB.weather === 'storm' ? 0.7 : AMB.weather === 'rain' ? 0.4 : 0;
   
   // Multi-stop sky transitions
   const stops = [
@@ -1004,6 +1096,14 @@ function applyTime(){
   const botCol = new THREE.Color(s1.b).lerp(new THREE.Color(s2.b), progress);
   const fogCol = new THREE.Color(s1.f).lerp(new THREE.Color(s2.f), progress);
  
+  // Storm tint: cheap color lerp toward a slate gray, no extra geometry
+  if (weatherMix > 0) {
+    const stormGray = new THREE.Color('#2c313b');
+    topCol.lerp(stormGray, weatherMix * 0.8);
+    botCol.lerp(stormGray, weatherMix * 0.6);
+    fogCol.lerp(stormGray, weatherMix * 0.9);
+  }
+ 
   if (typeof skyMat !== 'undefined') {
     skyMat.uniforms.topColor.value.copy(topCol);
     skyMat.uniforms.bottomColor.value.copy(botCol);
@@ -1012,14 +1112,14 @@ function applyTime(){
   scene.background = fogCol;
   
   // Adjust light intensity
-  hemi.intensity = night * 0.85 + day * 0.7;
+  hemi.intensity = (night * 0.85 + day * 0.7) * (1 - weatherMix * 0.3);
   const nightHemiCol = new THREE.Color('#8aa1c4');
   const dayHemiCol   = new THREE.Color('#ffffff');
   hemi.color.lerpColors(nightHemiCol, dayHemiCol, day);
   hemi.groundColor.lerpColors(new THREE.Color('#4a526b'), new THREE.Color('#666666'), day);
   
   // Keep directional light active at night to act as moonlight for shadows and definition
-  sun.intensity = night * 0.4 + day * 1.5;
+  sun.intensity = (night * 0.4 + day * 1.5) * (1 - weatherMix * 0.45);
   sun.color.lerpColors(new THREE.Color('#6677aa'),new THREE.Color('#fff5e6'),day);
   
   nightFill.intensity = night * 8.0;
@@ -1155,6 +1255,61 @@ cloudTrack.addEventListener('click', () => {
   cloudMesh.visible = AMB.clouds;
 });
  
+// Weather toggle (rain / storm) - pure CSS rain layer + occasional lightning flash.
+// No particle systems, no extra draw calls - just a couple of animated pseudo-elements.
+const weatherRow = document.createElement('div');
+weatherRow.className = 'ap-row';
+weatherRow.innerHTML = `
+  <div class="ap-lbl"><span>Weather</span></div>
+  <div class="aw-segs" id="aw-segs">
+    <button class="aw-opt active" data-w="clear">Clear</button>
+    <button class="aw-opt" data-w="rain">Rain</button>
+    <button class="aw-opt" data-w="storm">Storm</button>
+  </div>`;
+apRows.appendChild(weatherRow);
+ 
+const awSegs = document.getElementById('aw-segs');
+const lightningEl = document.getElementById('lightning-flash');
+let lightningTimer = null;
+ 
+function scheduleLightning(){
+  const delay = 3500 + Math.random() * 7000;
+  lightningTimer = setTimeout(()=>{
+    lightningEl.classList.remove('flash');
+    requestAnimationFrame(()=> lightningEl.classList.add('flash'));
+    // Brief real light flicker tied to the actual scene lights - just numbers, no geometry
+    const prevSun = sun.intensity, prevHemi = hemi.intensity;
+    sun.intensity = Math.max(prevSun, 2.2);
+    hemi.intensity = Math.max(prevHemi, 1.3);
+    setTimeout(()=>{ sun.intensity = prevSun; hemi.intensity = prevHemi; }, 160);
+    if(AMB.weather === 'storm') scheduleLightning();
+  }, delay);
+}
+function toggleLightning(on){
+  clearTimeout(lightningTimer);
+  lightningEl.classList.remove('flash');
+  if(on) scheduleLightning();
+}
+ 
+function setWeather(w){
+  AMB.weather = w;
+  [...awSegs.children].forEach(btn => btn.classList.toggle('active', btn.dataset.w === w));
+  if(w === 'clear'){
+    rainMesh.visible = false;
+  } else {
+    rainMesh.visible = true;
+    rainMesh.count = w === 'storm' ? RAIN_COUNT : Math.round(RAIN_COUNT * RAIN_LIGHT_FRACTION);
+    rainMat.opacity = w === 'storm' ? 0.72 : 0.5;
+  }
+  toggleLightning(w === 'storm');
+  applyTime();
+}
+awSegs.addEventListener('click', e=>{
+  const btn = e.target.closest('.aw-opt');
+  if(!btn) return;
+  setWeather(btn.dataset.w);
+});
+ 
 document.getElementById('ap-reset').addEventListener('click', ()=>{
   Object.assign(AMB,defaults);
   SLIDERS.forEach(({key,min,max,fmt})=>{
@@ -1171,7 +1326,7 @@ document.getElementById('ap-reset').addEventListener('click', ()=>{
   cloudVal.textContent = AMB.clouds ? 'ON' : 'OFF';
   cloudMesh.visible = AMB.clouds;
  
-  applyTime();
+  setWeather('clear');
 });
  
 const fab=document.getElementById('time-badge'), panel=document.getElementById('amb-panel');
@@ -1368,11 +1523,14 @@ function animate(){
     cloudMesh.instanceMatrix.needsUpdate = true;
   }
  
+  tickRain();
+ 
   processHover();
   updatePersistentLabelPositions();
   
-  // Adjust fog distance based on density slider
-  const targetFar = FOG_BASE / Math.max(0.1, AMB.fogDensity);
+  // Adjust fog distance based on density slider (storms thicken fog for mood, still one division)
+  const weatherFogBoost = AMB.weather === 'storm' ? 1.8 : AMB.weather === 'rain' ? 1.3 : 1;
+  const targetFar = FOG_BASE / Math.max(0.1, AMB.fogDensity * weatherFogBoost);
   scene.fog.far += (targetFar - scene.fog.far) * 0.1;
   
   controls.update();
